@@ -1,0 +1,4 @@
+-lib coconut.diffing
+-cp src
+-D jvm
+extraParams.hxml

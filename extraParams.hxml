@@ -1,0 +1,1 @@
+--macro addGlobalMetadata('java.awt.Component', '@:autoBuild(coconut.awt.macros.Decorator.build())', false)
