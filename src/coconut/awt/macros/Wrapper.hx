@@ -28,7 +28,10 @@ class Wrapper {
         }
 
       ret.kind = TDClass(path.asTypePath(), [], false, true);
-      ret.meta = [{ name: MARKER, params: [], pos: (macro null).pos }];
+      ret.meta = [
+        { name: MARKER, params: [], pos: (macro null).pos },
+        { name: ':native', params: [macro $v{'coconut.$path'}], pos: (macro null).pos },
+      ];
 
       function add(extra)
         ret.fields = ret.fields.concat(extra.fields);
@@ -77,20 +80,26 @@ class Wrapper {
             if (f.name.startsWith(p))
               switch f.type.reduce() {
                 case TFun([], ret):
-                  candidates.set(f.name.substr(p.length), ret);
+                  candidates.set(f.name.substr(p.length), { name: f.name, type: ret });
                 default:
               }
+
+        var log = path == 'java.javax.swing.JTextField.JTextField';
 
         for (f in fields)
           if (f.name.startsWith('set'))
             switch f.type.reduce() {
               case TFun([{ t: t }], TAbstract(_.get() => { pack: [], name: 'Void' }, _)) if (candidates.exists(f.name.substr(3)) && !f.meta.has(':deprecated')):
-
-                var setter = f.name;
+                var name = f.name.substr(3);
+                var setter = f.name,
+                    getter = candidates[name].name;
 
                 addAttr(
                   f.name.charAt(3).toLowerCase() + f.name.substr(4), f.pos, t.toComplex(),
-                  macro if (nu != old) target.$setter(nu)
+                  macro if (nu != target.$getter()) {
+                    // if ($v{log}) trace($v{path} + '::' + $v{name} + [nu, old, target.$getter()]);
+                    target.$setter(nu);
+                  }
                 );
               default:
             }

@@ -35,7 +35,14 @@ class RunTests {
     var fr = new JFrame();
     fr.setSize(600, 500);
 
+    var filters:coconut.data.List<{ final name:String; final predicate:Todo->Bool; }> = [
+      { name: 'All', predicate: _ -> true, },
+      { name: 'Active', predicate: t -> !t.done, },
+      { name: 'Completed', predicate: t -> t.done, },
+    ];
+
     var desc = new State(''),
+        filter = new State(filters.first().force().predicate),
         todos = new ObservableArray<Todo>();
 
     function add() {
@@ -65,9 +72,11 @@ class RunTests {
 
           <VBox>
             <for ${item in todos.values()}>
-              <HBox>
-                <JCheckBox maximumSize=${line} selected=${item.done} text=${item.description} onItemStateChanged=${item.update({ done: event.getStateChange() == ItemEvent.SELECTED })}/>
-              </HBox>
+              <if ${filter.value(item)}>
+                <HBox>
+                  <JCheckBox maximumSize=${line} selected=${item.done} text=${item.description} onItemStateChanged=${item.update({ done: event.getStateChange() == ItemEvent.SELECTED })}/>
+                </HBox>
+              </if>
             </for>
             <Filler />
           </VBox>
@@ -77,13 +86,20 @@ class RunTests {
             <Label text=${switch itemsLeft() {
               case 1: '1 item left';
               case left: '$left items left';
-            }}/>
+            }} preferredSize=${new Dimension(200, 40)} />
+
+            <for ${f in filters}>
+              <JToggleButton text=${f.name} selected=${filter.value == f.predicate} onMouseClicked=${filter.set(f.predicate)} />
+            </for>
+
+            <Filler />
 
             <switch ${[for (t in todos.values()) if (t.done) t]}>
               <case ${[]}>
               <case ${completed}>
                 <JButton text="Clear Completed" onMouseClicked=${for (t in completed) todos.remove(t)} />
             </switch>
+
           </HBox>
 
         </VBox>
